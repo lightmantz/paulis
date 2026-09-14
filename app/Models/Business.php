@@ -37,4 +37,9 @@ class Business extends Model
                     ->whereIn('status', ['Trial', 'Active'])
                     ->latestOfMany();
     }
+
+    public function settings()
+    {
+        return $this->hasOne(BusinessSetting::class);
+    }
 }

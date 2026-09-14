@@ -1,15 +1,20 @@
 <?php
 
 use App\Http\Controllers\Auth\BusinessLoginController;
+use App\Http\Controllers\Business\ActivityController;
 use App\Http\Controllers\Business\CustomerController;
 use App\Http\Controllers\Business\DashboardController;
 use App\Http\Controllers\Business\ExpenseController;
 use App\Http\Controllers\Business\FinancialController;
 use App\Http\Controllers\Business\InventoryController;
+use App\Http\Controllers\Business\PosController;
+use App\Http\Controllers\Business\RepairController;
+use App\Http\Controllers\Business\SettingController;
 use App\Http\Controllers\Business\SupplierController;
 use App\Http\Controllers\Business\UserAccessController;
 use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Business\PurchaseController;
 
 // Public
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -25,30 +30,53 @@ Route::post('/logout', [BusinessLoginController::class, 'logout'])->name('busine
 Route::middleware(['business'])->prefix('app')->name('business.')->group(function () {
     Route::get('/dashboard',    [DashboardController::class, 'index'])->name('dashboard');
 
+    // POS
+    Route::get('/pos',          [PosController::class, 'index'])->name('pos');
+    Route::post('/pos',         [PosController::class, 'store'])->name('pos.store');
+
+    // Inventory
     Route::get('/inventory',    [InventoryController::class, 'index'])->name('inventory');
     Route::post('/inventory',   [InventoryController::class, 'store'])->name('inventory.store');
 
+    // Customers
     Route::get('/customers',    [CustomerController::class, 'index'])->name('customers');
     Route::post('/customers',   [CustomerController::class, 'store'])->name('customers.store');
 
+    // Suppliers
     Route::get('/suppliers',    [SupplierController::class, 'index'])->name('suppliers');
     Route::post('/suppliers',   [SupplierController::class, 'store'])->name('suppliers.store');
 
+    // Expenses
     Route::get('/expenses',     [ExpenseController::class, 'index'])->name('expenses');
     Route::post('/expenses',    [ExpenseController::class, 'store'])->name('expenses.store');
 
+    // Financial
     Route::get('/financial',    [FinancialController::class, 'index'])->name('financial');
 
+    // Users
     Route::get('/users',        [UserAccessController::class, 'index'])->name('users');
     Route::post('/users',       [UserAccessController::class, 'store'])->name('users.store');
 
+    // Activity History
+    Route::get('/activity',     [ActivityController::class, 'index'])->name('activity');
+
+    // Settings
+    Route::get('/settings',     [SettingController::class, 'index'])->name('settings');
+    Route::put('/settings',     [SettingController::class, 'update'])->name('settings.update');
+
+    // ── Repair, Maintenance & Service ─────────────────────────
+    Route::get('/service',                [RepairController::class, 'index'])->name('service');
+    Route::post('/service',               [RepairController::class, 'store'])->name('service.store');
+    Route::get('/service/{job}',          [RepairController::class, 'show'])->name('service.show');
+    Route::post('/service/{job}/status',  [RepairController::class, 'updateStatus'])->name('service.status');
+    Route::post('/service/{job}/parts',   [RepairController::class, 'addPart'])->name('service.parts');
+    Route::post('/service/{job}/invoice', [RepairController::class, 'updateInvoice'])->name('service.invoice');
+    Route::get('/purchases',                 [PurchaseController::class, 'index'])->name('purchases');
+    Route::post('/purchases/orders',         [PurchaseController::class, 'storeOrder'])->name('purchases.orders.store');
+    Route::post('/purchases/{order}/receive',[PurchaseController::class, 'receive'])->name('purchases.receive');
+
     // Placeholders for later phases
-    Route::view('/pos',          'business.coming-soon', ['page' => 'Point of Sale', 'phase' => 6])->name('pos');
-    Route::view('/service',      'business.coming-soon', ['page' => 'Repair, Maintenance & Service', 'phase' => 7])->name('service');
-    Route::view('/purchases',    'business.coming-soon', ['page' => 'Purchases', 'phase' => 7])->name('purchases');
     Route::view('/stock-taking', 'business.coming-soon', ['page' => 'Stock Taking', 'phase' => 8])->name('stock-taking');
     Route::view('/returns',      'business.coming-soon', ['page' => 'Returns', 'phase' => 8])->name('returns');
     Route::view('/reports',      'business.coming-soon', ['page' => 'Reports', 'phase' => 8])->name('reports');
-    Route::view('/activity',     'business.coming-soon', ['page' => 'Activity History', 'phase' => 8])->name('activity');
-    Route::view('/settings',     'business.coming-soon', ['page' => 'Settings', 'phase' => 8])->name('settings');
 });
