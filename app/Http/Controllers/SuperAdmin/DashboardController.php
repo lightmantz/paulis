@@ -11,21 +11,34 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $mrr = Business::where('status', 'Active')->sum('monthly_fee');
-        $activeCount = Business::where('status', 'Active')->count();
-        $totalBusinesses = Business::count();
-        $totalUsers = User::count();
-        $activeUsers = User::where('status', 'Active')->count();
-        $needsAction = Business::whereIn('status', ['Trial', 'Suspended', 'Revoked'])->count();
+        $businesses = Business::all();
+
+        $totalBusinesses = $businesses->count();
+        $activeCount     = $businesses->where('status', 'Active')->count();
+        $totalUsers      = User::count();
+        $activeUsers     = User::where('status', 'Active')->count();
+        $mrr             = $businesses->where('status', 'Active')->sum('monthly_fee');
+        $needsAction     = $businesses->whereIn('status', ['Trial', 'Suspended', 'Revoked'])->count();
+
+        // Trend for the last 7 months (simple placeholder using current MRR scaled)
+        $trend = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $trend[] = [
+                'label' => $month->format('M'),
+                'value' => $i === 0 ? $mrr : $mrr * (0.6 + (6 - $i) * 0.06),
+            ];
+        }
+        $trendMax = max(array_column($trend, 'value')) ?: 1;
 
         $recentActivity = Activity::with('causer')
             ->orderByDesc('created_at')
-            ->limit(8)
+            ->limit(5)
             ->get();
 
         return view('superadmin.dashboard', compact(
-            'mrr', 'activeCount', 'totalBusinesses', 'totalUsers',
-            'activeUsers', 'needsAction', 'recentActivity'
+            'totalBusinesses', 'activeCount', 'totalUsers', 'activeUsers',
+            'mrr', 'needsAction', 'trend', 'trendMax', 'recentActivity'
         ));
     }
 }

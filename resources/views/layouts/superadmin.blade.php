@@ -12,40 +12,33 @@
   <aside class="side" id="side">
     <div class="brand">
       <div class="mark">SA</div>
-      <div><b>Super Admin</b><small>Pauli's POS Cloud</small></div>
+      <div>
+        <b>Super Admin</b>
+        <small>Pauli's POS Cloud</small>
+      </div>
       <button class="close-side" onclick="menu(false)">×</button>
     </div>
-
     <nav class="nav">
       <div class="nav-label">Platform</div>
-      <a class="nav-btn @if(request()->routeIs('superadmin.dashboard')) active @endif"
-         href="{{ route('superadmin.dashboard') }}"><span>⌂</span>Dashboard</a>
-      <a class="nav-btn @if(request()->routeIs('superadmin.businesses')) active @endif"
-         href="{{ route('superadmin.businesses') }}"><span>▦</span>Business Accounts</a>
-      <a class="nav-btn @if(request()->routeIs('superadmin.users')) active @endif"
-         href="{{ route('superadmin.users') }}"><span>♙</span>All Users</a>
-      <a class="nav-btn @if(request()->routeIs('superadmin.subscriptions')) active @endif"
-         href="{{ route('superadmin.subscriptions') }}"><span>◈</span>Subscriptions</a>
-      <a class="nav-btn @if(request()->routeIs('superadmin.finance')) active @endif"
-         href="{{ route('superadmin.finance') }}"><span>▤</span>System Financials</a>
+      <a href="{{ route('superadmin.dashboard') }}"      class="nav-btn @if(request()->routeIs('superadmin.dashboard')) active @endif"><span>⌂</span>Dashboard</a>
+      <a href="{{ route('superadmin.businesses') }}"     class="nav-btn @if(request()->routeIs('superadmin.businesses')) active @endif"><span>▦</span>Business Accounts</a>
+      <a href="{{ route('superadmin.users') }}"          class="nav-btn @if(request()->routeIs('superadmin.users')) active @endif"><span>♙</span>All Users</a>
+      <a href="{{ route('superadmin.subscriptions') }}"  class="nav-btn @if(request()->routeIs('superadmin.subscriptions')) active @endif"><span>◈</span>Subscriptions</a>
+      <a href="{{ route('superadmin.finance') }}"        class="nav-btn @if(request()->routeIs('superadmin.finance')) active @endif"><span>▤</span>System Financials</a>
       <div class="nav-label">Control</div>
-      <a class="nav-btn @if(request()->routeIs('superadmin.roles')) active @endif"
-         href="{{ route('superadmin.roles') }}"><span>⌘</span>Roles &amp; Access</a>
-      <a class="nav-btn @if(request()->routeIs('superadmin.audit')) active @endif"
-         href="{{ route('superadmin.audit') }}"><span>◷</span>Audit History</a>
-      <a class="nav-btn @if(request()->routeIs('superadmin.settings')) active @endif"
-         href="{{ route('superadmin.settings') }}"><span>⚙</span>Settings</a>
+      <a href="{{ route('superadmin.roles') }}"          class="nav-btn @if(request()->routeIs('superadmin.roles')) active @endif"><span>⌘</span>Roles &amp; Access</a>
+      <a href="{{ route('superadmin.audit') }}"          class="nav-btn @if(request()->routeIs('superadmin.audit')) active @endif"><span>◷</span>Audit History</a>
+      <a href="{{ route('superadmin.settings') }}"       class="nav-btn @if(request()->routeIs('superadmin.settings')) active @endif"><span>⚙</span>Settings</a>
     </nav>
-
     <div class="account">
       <div class="avatar">SA</div>
       <div>
         <b>{{ auth('superadmin')->user()->name }}</b>
         <small>Super Admin</small>
       </div>
-      <form method="POST" action="{{ route('superadmin.logout') }}">
+      <form method="POST" action="{{ route('superadmin.logout') }}" style="margin-left:auto">
         @csrf
-        <button type="submit" title="Sign out">↪</button>
+        <button type="submit" title="Sign out" style="border:0;background:transparent;color:#fff;font-size:17px;cursor:pointer">↪</button>
       </form>
     </div>
   </aside>
@@ -62,12 +55,15 @@
         </div>
       </div>
       <div class="top-actions">
-        <input class="global-search" placeholder="Search businesses or users…">
+        <input class="global-search" id="globalSearch" placeholder="Search businesses or users…" oninput="globalLookup(this.value)">
         <span class="role-chip">Super Admin</span>
       </div>
     </header>
 
     <div class="content">
+      @if (session('success'))
+        <div class="flash">✓ {{ session('success') }}</div>
+      @endif
       @yield('content')
     </div>
   </main>
@@ -78,12 +74,23 @@ function menu(v) {
   document.getElementById('side').classList.toggle('open', v);
   document.getElementById('scrim').classList.toggle('show', v);
 }
-function tick() {
+function updateClock() {
   document.getElementById('liveClock').textContent =
     new Intl.DateTimeFormat('en-TZ', {dateStyle:'medium', timeStyle:'medium', timeZone:'Africa/Dar_es_Salaam'})
       .format(new Date());
 }
-tick(); setInterval(tick, 1000);
+updateClock(); setInterval(updateClock, 1000);
+
+function globalLookup(q){
+  q = (q||'').trim();
+  if (q.length < 2) return;
+  const path = location.pathname;
+  if (path.endsWith('/businesses') || path.endsWith('/users')) {
+    const inp = document.querySelector('input[name="q"]');
+    if (inp) { inp.value = q; inp.form.submit(); return; }
+  }
+  location.href = '{{ route('superadmin.businesses') }}?q=' + encodeURIComponent(q);
+}
 </script>
 @stack('scripts')
 </body>

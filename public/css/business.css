@@ -101,3 +101,113 @@ td{padding:11px 13px;border-top:1px solid var(--line);white-space:nowrap}
   .dashboard-clock .live-time{padding:2px 7px}
   #dashboardGreeting{font-size:25px}
 }
+
+/* ─── Generic form grid (used by settings, forms, modals) ─── */
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.form-grid .field{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+}
+.form-grid .field.full{grid-column:1/-1}
+.form-grid label{
+  font-size:10px;
+  font-weight:800;
+  color:#344054;
+}
+.form-grid input,
+.form-grid select,
+.form-grid textarea{
+  width:100%;
+  border:1px solid #dfe3ea;
+  border-radius:8px;
+  padding:10px 11px;
+  font-size:12px;
+  background:#fff;
+  outline:none;
+  font-family:inherit;
+}
+.form-grid input:focus,
+.form-grid select:focus,
+.form-grid textarea:focus{
+  border-color:var(--p);
+  box-shadow:0 0 0 3px rgba(103,85,217,.09);
+}
+.form-grid input[readonly]{
+  background:#f3f4f7;
+  color:#4d5562;
+}
+
+/* ─── Generic page "panel" body padding ─── */
+.panel > div:not(.panel-head):not(.table-wrap){
+  /* only pad direct children that look like content wrappers */
+}
+.panel .panel-head{
+  padding:15px 17px;
+  border-bottom:1px solid var(--line);
+}
+.panel .panel-head h2{
+  font-size:13px;
+  margin:0;
+}
+.panel .panel-head p{
+  font-size:9px;
+  color:var(--muted);
+  margin:3px 0 0;
+}
+
+/* ─── Section wrapper for the settings page ─── */
+.settings-section{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  margin-bottom:14px;
+  overflow:hidden;
+}
+.settings-section > header{
+  padding:15px 17px;
+  border-bottom:1px solid var(--line);
+}
+.settings-section > header h2{
+  font-size:13px;
+  margin:0 0 3px;
+}
+.settings-section > header p{
+  font-size:9px;
+  color:var(--muted);
+  margin:0;
+}
+.settings-section > .settings-body{
+  padding:18px 17px;
+}
+
+/* ─── Simple button row ─── */
+.form-actions-row{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:14px;
+}
+
+/* ─── Secondary button (used by settings) ─── */
+.secondary{
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--ink);
+  border-radius:9px;
+  padding:10px 15px;
+  font-weight:700;
+  font-size:11px;
+  cursor:pointer;
+}
+
+/* ─── Responsive ─── */
+@media(max-width:650px){
+  .form-grid{grid-template-columns:1fr}
+  .form-grid .field.full{grid-column:auto}
+}

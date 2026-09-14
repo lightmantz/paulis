@@ -7,7 +7,7 @@
     <div>
       <p class="eyebrow">ACCOUNTABILITY</p>
       <h1>Audit History</h1>
-      <p>{{ $events->total() }} recorded events.</p>
+      <p>{{ $events->total() }} recorded events across all tenants.</p>
     </div>
   </div>
 
@@ -24,5 +24,7 @@
     @endforelse
   </div>
 
-  <div class="pager">{{ $events->links() }}</div>
+  @if ($events->hasPages())
+    <div class="pager">{{ $events->links() }}</div>
+  @endif
 @endsection
