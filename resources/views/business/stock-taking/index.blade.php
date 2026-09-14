@@ -16,6 +16,7 @@
 .st-tabs a.active{background:var(--p);border-color:var(--p);color:#fff}
 .st-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 .st-toolbar input{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:11px;background:#fff;min-width:200px}
+.st-toolbar .toolbar-actions{display:flex;gap:7px;flex-wrap:wrap}
 .alert-success{background:#e8f7f0;color:#20795c;border:1px solid #c8ecdd;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px}
 .alert-error{background:#feecec;color:#b13d3d;border:1px solid #f3c8c6;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px}
 .count-row td{padding:9px 10px;font-size:11px}
@@ -26,8 +27,15 @@
 .variance-zero{color:#8a91a1}
 .st-locked{padding:14px;background:#fff8e8;border:1px solid #f0d9a7;color:#805b12;border-radius:9px;font-size:11px;margin-bottom:12px}
 .reconcile-table .total-row{background:#f6f5ff;font-weight:800}
+.del-btn{border:1px solid #f5c9c5;background:#feecec;color:#b13d3d;border-radius:8px;padding:9px 12px;font-weight:800;font-size:11px;cursor:pointer}
+.del-btn:hover{background:#fde0dd}
+.row-action-icon{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 8px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap}
+.row-action-icon.del{border-color:#f5c9c5;background:#feecec;color:#b13d3d}
+.row-action-icon.view{border-color:#d7d1ff;background:#f5f2ff;color:#5947ca}
+.past-list{margin-top:18px}
+.past-list h2{font-size:13px;margin:0 0 10px}
 @media(max-width:900px){.st-stats{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:620px){.st-stats{grid-template-columns:1fr}.st-toolbar{display:grid;grid-template-columns:1fr}}
+@media(max-width:620px){.st-stats{grid-template-columns:1fr}.st-toolbar{display:grid;grid-template-columns:1fr}.st-toolbar .toolbar-actions{display:grid;grid-template-columns:1fr 1fr}}
 </style>
 @endpush
 
@@ -42,7 +50,8 @@
       <p>Count physical stock, reconcile variances and post adjustments.</p>
     </div>
     @if (auth()->user()->role === 'owner')
-      <form method="POST" action="{{ route('business.stock-taking.start') }}">
+      <form method="POST" action="{{ route('business.stock-taking.start') }}"
+            onsubmit="return confirm('Start a new stock take? Any existing draft will be abandoned.')">
         @csrf
         <button class="primary" type="submit">＋ New stock take</button>
       </form>
@@ -78,13 +87,24 @@
       <section class="panel">
         <div class="st-toolbar" style="padding:12px 14px">
           <input id="stSearch" placeholder="Search product name, SKU or barcode…" oninput="filterStRows()">
-          <span style="font-size:10px;color:var(--muted)">Reference: <b>{{ $take->reference }}</b> · {{ $take->items->count() }} products</span>
-          @if ($take->status === 'draft' && auth()->user()->role === 'owner')
-            <form method="POST" action="{{ route('business.stock-taking.post', $take) }}" onsubmit="return confirm('Post physical counts to inventory? Stock will be updated.')">
-              @csrf
-              <button class="primary" type="submit">Post adjustments</button>
-            </form>
-          @endif
+          <span style="font-size:10px;color:var(--muted);white-space:nowrap">
+            <b>{{ $take->reference }}</b> · {{ $take->items->count() }} products
+          </span>
+          <div class="toolbar-actions">
+            @if ($take->status === 'draft' && auth()->user()->role === 'owner')
+              <form method="POST" action="{{ route('business.stock-taking.post', $take) }}"
+                    onsubmit="return confirm('Post physical counts to inventory? Stock will be updated.')">
+                @csrf
+                <button class="primary" type="submit">Post adjustments</button>
+              </form>
+              <form method="POST" action="{{ route('business.stock-taking.destroy', $take) }}"
+                    onsubmit="return confirm('Delete this draft stock take? All counts will be lost and cannot be recovered.')">
+                @csrf
+                @method('DELETE')
+                <button class="del-btn" type="submit">Delete draft</button>
+              </form>
+            @endif
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -184,6 +204,52 @@
         </div>
       </section>
     @endif
+  @endif
+
+  {{-- Past Stock Takes --}}
+  @if (!empty($past) && $past->count())
+    <section class="panel past-list">
+      <div class="panel-head">
+        <div>
+          <h2>Past Stock Takes</h2>
+          <p>Recently posted or abandoned stock takes · click Delete on drafts only.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr><th>Reference</th><th>Status</th><th>Counted by</th><th>Created</th><th>Posted</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            @foreach ($past as $p)
+              <tr>
+                <td><b>{{ $p->reference }}</b></td>
+                <td>
+                  <span class="pill @if($p->status === 'posted') @elseif($p->status === 'abandoned') bad @else warn @endif">
+                    {{ ucfirst($p->status) }}
+                  </span>
+                </td>
+                <td>{{ $p->counter?->name ?? '—' }}</td>
+                <td>{{ $p->created_at->format('d M Y · H:i') }}</td>
+                <td>{{ $p->posted_at?->format('d M Y · H:i') ?? '—' }}</td>
+                <td>
+                  @if ($p->status !== 'posted' && auth()->user()->role === 'owner')
+                    <form method="POST" action="{{ route('business.stock-taking.destroy', $p) }}" style="display:inline"
+                          onsubmit="return confirm('Delete {{ $p->reference }}? This cannot be undone.')">
+                      @csrf
+                      @method('DELETE')
+                      <button class="row-action-icon del" type="submit">Delete</button>
+                    </form>
+                  @else
+                    <span style="font-size:9px;color:#8d94a0">{{ $p->status === 'posted' ? 'Posted — locked' : '—' }}</span>
+                  @endif
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </section>
   @endif
 
   <script>
