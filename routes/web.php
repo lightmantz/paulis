@@ -15,7 +15,9 @@ use App\Http\Controllers\Business\UserAccessController;
 use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Business\PurchaseController;
-
+use App\Http\Controllers\Business\StockTakeController;
+use App\Http\Controllers\Business\ReturnController;
+use App\Http\Controllers\Business\ReportController;
 // Public
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/register',  [LandingController::class, 'showRegister'])->name('business.register.show');
@@ -74,9 +76,15 @@ Route::middleware(['business'])->prefix('app')->name('business.')->group(functio
     Route::get('/purchases',                 [PurchaseController::class, 'index'])->name('purchases');
     Route::post('/purchases/orders',         [PurchaseController::class, 'storeOrder'])->name('purchases.orders.store');
     Route::post('/purchases/{order}/receive',[PurchaseController::class, 'receive'])->name('purchases.receive');
+    Route::get('/stock-taking',                [StockTakeController::class, 'index'])->name('stock-taking');
+    Route::post('/stock-taking/start',         [StockTakeController::class, 'startNew'])->name('stock-taking.start');
+    Route::post('/stock-taking/{take}/count',  [StockTakeController::class, 'updateCount'])->name('stock-taking.count');
+    Route::post('/stock-taking/{take}/post',   [StockTakeController::class, 'post'])->name('stock-taking.post');
+    Route::get('/returns',                    [ReturnController::class, 'index'])->name('returns');
+    Route::post('/returns',                   [ReturnController::class, 'store'])->name('returns.store');
+    Route::post('/returns/{return}/approve',  [ReturnController::class, 'approve'])->name('returns.approve');
+    Route::post('/returns/{return}/reject',   [ReturnController::class, 'reject'])->name('returns.reject');
+    Route::get('/reports',         [ReportController::class, 'index'])->name('reports');
+    Route::get('/reports/{report}',[ReportController::class, 'show'])->name('reports.show');
 
-    // Placeholders for later phases
-    Route::view('/stock-taking', 'business.coming-soon', ['page' => 'Stock Taking', 'phase' => 8])->name('stock-taking');
-    Route::view('/returns',      'business.coming-soon', ['page' => 'Returns', 'phase' => 8])->name('returns');
-    Route::view('/reports',      'business.coming-soon', ['page' => 'Reports', 'phase' => 8])->name('reports');
 });
