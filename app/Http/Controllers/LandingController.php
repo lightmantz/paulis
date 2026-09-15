@@ -16,9 +16,7 @@ class LandingController extends Controller
 {
     public function index()
     {
-        // If someone is already logged into a business, offer a "Go to dashboard" link
         $alreadyLoggedIn = Auth::guard('web')->check();
-
         return view('landing', compact('alreadyLoggedIn'));
     }
 
@@ -39,8 +37,8 @@ class LandingController extends Controller
             'password'      => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        // Build a unique slug
-        $baseSlug = Str::slug($data['business_name']);
+        // Unique slug
+        $baseSlug = Str::slug($data['business_name']) ?: 'business';
         $slug = $baseSlug;
         $i = 1;
         while (Business::where('slug', $slug)->exists()) {
@@ -56,7 +54,6 @@ class LandingController extends Controller
         try {
             DB::beginTransaction();
 
-            // 1. Business
             $business = Business::create([
                 'slug'          => $slug,
                 'name'          => $data['business_name'],
@@ -71,20 +68,18 @@ class LandingController extends Controller
                 'trial_ends_at' => now()->addDays(14),
             ]);
 
-            // 2. Subscription (trial)
             Subscription::create([
-                'business_id'    => $business->id,
-                'plan'           => $data['plan'],
-                'monthly_fee'    => $planPrices[$data['plan']],
-                'status'         => 'Trial',
-                'starts_at'      => now()->toDateString(),
-                'trial_ends_at'  => now()->addDays(14)->toDateString(),
+                'business_id'   => $business->id,
+                'plan'          => $data['plan'],
+                'monthly_fee'   => $planPrices[$data['plan']],
+                'status'        => 'Trial',
+                'starts_at'     => now()->toDateString(),
+                'trial_ends_at' => now()->addDays(14)->toDateString(),
             ]);
 
-            // 3. Owner user
-            // Make a unique username from the owner's name + business
-            $baseUsername = Str::slug($data['owner_name'], '');
-            $username = $baseUsername ?: 'owner';
+            // Unique username for owner
+            $baseUsername = Str::slug($data['owner_name'], '') ?: 'owner';
+            $username = $baseUsername;
             $j = 1;
             while (User::where('username', $username)->exists()) {
                 $username = $baseUsername . $j++;
@@ -101,17 +96,12 @@ class LandingController extends Controller
                 'password'    => Hash::make($data['password']),
             ]);
 
-            DB::commit();
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            report($e);
+      
+} catch (\Throwable $e) {
+    DB::rollBack();
+    throw $e;
+}
 
-            return back()
-                ->withInput()
-                ->withErrors(['business_name' => 'Registration failed. Please try again.']);
-        }
-
-        // Auto-login as the owner
         Auth::guard('web')->login($owner);
         $request->session()->regenerate();
 

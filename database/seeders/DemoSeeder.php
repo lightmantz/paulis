@@ -12,56 +12,73 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        // Super Admin (system owner)
-        SuperAdmin::create([
-            'name' => 'System Administrator',
-            'email' => 'admin@paulispos.co.tz',
-            'password' => Hash::make('Admin@2026'),
-        ]);
+        // ── Super Admin ────────────────────────────────────────
+        SuperAdmin::updateOrCreate(
+            ['email' => 'admin@paulispos.co.tz'],
+            [
+                'name'     => 'System Administrator',
+                'password' => Hash::make('Admin@2026'),
+            ]
+        );
 
-        // Business account
-        $business = Business::create([
-            'slug' => 'paulis',
-            'name' => "Pauli's Computer Shop",
-            'owner_name' => 'Paulina',
-            'email' => 'paulina@paulis.co.tz',
-            'phone' => '+255 754 000 101',
-            'city' => 'Mwanza',
-            'plan' => 'Professional',
-            'status' => 'Active',
-            'monthly_fee' => 185000,
-            'renewal_date' => '2026-09-01',
-        ]);
+        // ── Business ───────────────────────────────────────────
+        $business = Business::updateOrCreate(
+            ['slug' => 'paulis'],
+            [
+                'name'          => "Pauli's Computer Shop",
+                'owner_name'    => 'Paulina',
+                'email'         => 'paulina@paulis.co.tz',
+                'phone'         => '+255 754 000 101',
+                'city'          => 'Mwanza',
+                'plan'          => 'Professional',
+                'status'        => 'Active',
+                'monthly_fee'   => 185000,
+                'renewal_date'  => now()->addDays(30)->toDateString(),
+                'trial_ends_at' => now()->addDays(14),
+            ]
+        );
 
-        // Business Owner
-        User::create([
-            'business_id' => $business->id,
-            'name' => 'Paulina',
-            'email' => 'paulina@paulis.co.tz',
-            'username' => 'owner',
-            'password' => Hash::make('1234'),
-            'role' => 'owner',
-        ]);
+        // ── Business Owner ─────────────────────────────────────
+        User::updateOrCreate(
+            ['email' => 'paulina@paulis.co.tz'],
+            [
+                'business_id' => $business->id,
+                'name'        => 'Paulina',
+                'username'    => 'owner',
+                'phone'       => '+255 754 000 101',
+                'role'        => 'owner',
+                'status'      => 'Active',
+                'password'    => Hash::make('1234'),
+            ]
+        );
 
-        // Sales Person
-        User::create([
-            'business_id' => $business->id,
-            'name' => 'Sarah A.',
-            'email' => 'sales@paulis.co.tz',
-            'username' => 'salesperson',
-            'password' => Hash::make('1234'),
-            'role' => 'sales_person',
-        ]);
+        // ── Sales Person ───────────────────────────────────────
+        User::updateOrCreate(
+            ['email' => 'sales@paulis.co.tz'],
+            [
+                'business_id' => $business->id,
+                'name'        => 'Sarah A.',
+                'username'    => 'salesperson',
+                'phone'       => '+255 754 000 002',
+                'role'        => 'sales_person',
+                'status'      => 'Active',
+                'password'    => Hash::make('1234'),
+            ]
+        );
 
-        // Repair Person
-        User::create([
-            'business_id' => $business->id,
-            'name' => 'Michael J.',
-            'email' => 'repairs@paulis.co.tz',
-            'username' => 'repairperson',
-            'password' => Hash::make('1234'),
-            'role' => 'repair_person',
-        ]);
+        // ── Repair Person ──────────────────────────────────────
+        User::updateOrCreate(
+            ['email' => 'repairs@paulis.co.tz'],
+            [
+                'business_id' => $business->id,
+                'name'        => 'Michael J.',
+                'username'    => 'repairperson',
+                'phone'       => '+255 754 000 003',
+                'role'        => 'repair_person',
+                'status'      => 'Active',
+                'password'    => Hash::make('1234'),
+            ]
+        );
 
         $this->command->info('✅ Demo data seeded successfully.');
     }

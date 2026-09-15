@@ -87,7 +87,7 @@ class DashboardController extends Controller
                 ->get();
         }
 
-        return view('business.dashboard', compact(
+        return view('businesses.dashboard', compact(
             'todaySales', 'stockValue', 'stockCount', 'productCount',
             'activeRepairs', 'awaitingApproval',
             'cash', 'chart', 'chartMax',
