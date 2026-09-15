@@ -37,7 +37,7 @@ class LandingController extends Controller
             'password'      => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        // Unique slug
+        // Build a unique slug
         $baseSlug = Str::slug($data['business_name']) ?: 'business';
         $slug = $baseSlug;
         $i = 1;
@@ -50,6 +50,8 @@ class LandingController extends Controller
             'Growth'       => 265000,
             'Professional' => 185000,
         ];
+
+        $owner = null;
 
         try {
             DB::beginTransaction();
@@ -77,7 +79,6 @@ class LandingController extends Controller
                 'trial_ends_at' => now()->addDays(14)->toDateString(),
             ]);
 
-            // Unique username for owner
             $baseUsername = Str::slug($data['owner_name'], '') ?: 'owner';
             $username = $baseUsername;
             $j = 1;
@@ -96,11 +97,17 @@ class LandingController extends Controller
                 'password'    => Hash::make($data['password']),
             ]);
 
-      
-} catch (\Throwable $e) {
-    DB::rollBack();
-    throw $e;
-}
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            // TEMP: show the real error during development
+            throw $e;
+
+            // Later, swap the throw for the friendly message:
+            // return back()->withInput()
+            //     ->withErrors(['business_name' => 'Registration failed. Please try again.']);
+        }
 
         Auth::guard('web')->login($owner);
         $request->session()->regenerate();
