@@ -74,6 +74,10 @@ Route::middleware(['business'])->prefix('app')->name('business.')->group(functio
     // ── Expenses ────────────────────────────────────────────────
     Route::get('/expenses',  [ExpenseController::class, 'index'])->name('expenses');
     Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::get('/expenses/{expense}',              [ExpenseController::class, 'show'])->name('expenses.show');
+    Route::post('/expenses/{expense}/approve',    [ExpenseController::class, 'approve'])->name('expenses.approve');
+    Route::put('/expenses/{expense}',              [ExpenseController::class, 'update'])->name('expenses.update');
+    Route::delete('/expenses/{expense}',           [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 
     // ── Financial Information ───────────────────────────────────
     Route::get('/financial', [FinancialController::class, 'index'])->name('financial');
@@ -106,6 +110,9 @@ Route::middleware(['business'])->prefix('app')->name('business.')->group(functio
     Route::get('/purchases',                 [PurchaseController::class, 'index'])->name('purchases');
     Route::post('/purchases/orders',         [PurchaseController::class, 'storeOrder'])->name('purchases.orders.store');
     Route::post('/purchases/{order}/receive',[PurchaseController::class, 'receive'])->name('purchases.receive');
+    Route::get('/purchases/{purchase}',            [PurchaseController::class, 'show'])->name('purchases.show');
+    Route::put('/purchases/{purchase}',            [PurchaseController::class, 'update'])->name('purchases.update');
+    Route::delete('/purchases/{purchase}',         [PurchaseController::class, 'destroy'])->name('purchases.destroy');
 
     // ── Stock Taking ────────────────────────────────────────────
     Route::get('/stock-taking',                [StockTakeController::class, 'index'])->name('stock-taking');

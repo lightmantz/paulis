@@ -61,12 +61,42 @@ class DashboardController extends Controller
         }
         $chartMax = max(array_column($chart, 'total')) ?: 1;
 
-        // ── Needs attention ────────────────────────────────────────
+        // ── Stock alerts ───────────────────────────────────────────
         $lowStockCount = 0;
         $outOfStockCount = 0;
         if (Schema::hasTable('products')) {
             $lowStockCount   = Product::whereColumn('stock', '<=', 'reorder_level')->where('stock', '>', 0)->count();
             $outOfStockCount = Product::where('stock', 0)->count();
+        }
+
+        // ── Expenses summary ───────────────────────────────────────
+        $expensesToday = 0;
+        $expensesMonth = 0;
+        $expensesYear  = 0;
+        $expensesPendingCount = 0;
+        $expensesPendingValue = 0;
+        $topExpenseCategories = collect();
+
+        if (Schema::hasTable('expenses')) {
+            $expensesToday = (float) Expense::whereDate('expense_date', today())->sum('amount');
+
+            $expensesMonth = (float) Expense::whereYear('expense_date', now()->year)
+                ->whereMonth('expense_date', now()->month)
+                ->sum('amount');
+
+            $expensesYear = (float) Expense::whereYear('expense_date', now()->year)
+                ->sum('amount');
+
+            $expensesPendingCount = Expense::where('approval_status', '!=', 'Approved')->count();
+            $expensesPendingValue = (float) Expense::where('approval_status', '!=', 'Approved')->sum('amount');
+
+            $topExpenseCategories = Expense::select('category', DB::raw('SUM(amount) as total'))
+                ->whereYear('expense_date', now()->year)
+                ->whereMonth('expense_date', now()->month)
+                ->groupBy('category')
+                ->orderByDesc('total')
+                ->limit(3)
+                ->get();
         }
 
         // ── Recent sales ───────────────────────────────────────────
@@ -92,6 +122,8 @@ class DashboardController extends Controller
             'activeRepairs', 'awaitingApproval',
             'cash', 'chart', 'chartMax',
             'lowStockCount', 'outOfStockCount',
+            'expensesToday', 'expensesMonth', 'expensesYear',
+            'expensesPendingCount', 'expensesPendingValue', 'topExpenseCategories',
             'recentSales', 'recentJobs'
         ));
     }

@@ -211,3 +211,21 @@ td{padding:11px 13px;border-top:1px solid var(--line);white-space:nowrap}
   .form-grid{grid-template-columns:1fr}
   .form-grid .field.full{grid-column:auto}
 }
+
+/* ── Total Expenses panel (dashboard) ─────────────────────── */
+.expenses-hero{padding:18px 17px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#f7f5ff 0%,#eef4ff 100%)}
+.expenses-hero small{display:block;font-size:9px;font-weight:800;color:#6755d9;letter-spacing:.6px;margin-bottom:6px}
+.expenses-hero strong{display:block;font-size:26px;color:#2a225e;letter-spacing:-.5px;margin-bottom:4px;overflow-wrap:anywhere}
+.expenses-hero span{display:block;font-size:10px;color:#667085}
+
+.expense-categories{padding:14px 17px}
+.expense-categories h4{margin:0 0 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#667085;font-weight:800}
+.expense-cat-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:11px}
+.expense-cat-row:last-child{border-bottom:0}
+.expense-cat-row span{color:#475467;overflow-wrap:anywhere}
+.expense-cat-row b{color:#2a225e;white-space:nowrap}
+.expense-empty{padding:10px 0;font-size:10px;color:#8d94a0;text-align:center}
+
+@media(max-width:650px){
+  .expenses-hero strong{font-size:22px}
+}

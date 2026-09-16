@@ -9,7 +9,7 @@
   elseif ($hour < 21)  $salutation = 'Good evening';
   else                 $salutation = 'Good night';
 
-  $firstName = explode(' ', auth()->user()->name)[0];
+  $firstName  = explode(' ', auth()->user()->name)[0];
   $todayLabel = strtoupper(now()->locale('en')->isoFormat('dddd D MMMM YYYY'));
 @endphp
 
@@ -67,7 +67,7 @@
     </div>
   </div>
 
-  {{-- Chart + Needs attention --}}
+  {{-- Chart + Total Expenses --}}
   <div class="grid">
     <section class="panel">
       <header>
@@ -93,47 +93,50 @@
     <section class="panel">
       <header>
         <div>
-          <h2>Needs attention</h2>
-          <p>Items requiring action</p>
+          <h2>Total Expenses</h2>
+          <p>Operational spending summary</p>
         </div>
-        <a class="link" href="{{ route('business.inventory') }}">View all</a>
+        <a class="link" href="{{ route('business.expenses') }}">View all</a>
       </header>
 
-      <a class="alert" href="{{ route('business.inventory') }}">
+      {{-- Big number: this month --}}
+      <div class="expenses-hero">
+        <small>THIS MONTH</small>
+        <strong>TSh {{ number_format($expensesMonth) }}</strong>
+        <span>Year to date · TSh {{ number_format($expensesYear) }}</span>
+      </div>
+
+      {{-- Quick stats --}}
+      <a class="alert" href="{{ route('business.expenses') }}">
+        <span>↗</span>
+        <div>
+          <b>Today · TSh {{ number_format($expensesToday) }}</b>
+          <small>Spending recorded today</small>
+        </div>
+        ›
+      </a>
+
+      <a class="alert" href="{{ route('business.expenses', ['status' => 'Pending Owner approval']) }}">
         <span>!</span>
         <div>
-          <b>{{ $lowStockCount }} products low in stock</b>
-          <small>{{ $outOfStockCount }} products are out of stock</small>
+          <b>{{ $expensesPendingCount }} awaiting approval</b>
+          <small>TSh {{ number_format($expensesPendingValue) }} pending review</small>
         </div>
         ›
       </a>
 
-      <a class="alert" href="{{ route('business.service') }}">
-        <span>⌁</span>
-        <div>
-          <b>{{ $awaitingApproval }} repairs awaiting approval</b>
-          <small>Oldest waiting for customer action</small>
-        </div>
-        ›
-      </a>
-
-      <a class="alert" href="{{ route('business.reports') }}">
-        <span>◇</span>
-        <div>
-          <b>Warranties expiring soon</b>
-          <small>Review the next 14 days</small>
-        </div>
-        ›
-      </a>
-
-      <a class="alert" href="{{ route('business.purchases') }}">
-        <span>↓</span>
-        <div>
-          <b>Purchases to review</b>
-          <small>Drafts entered by Salesperson</small>
-        </div>
-        ›
-      </a>
+      {{-- Top categories --}}
+      <div class="expense-categories">
+        <h4>Top categories this month</h4>
+        @forelse ($topExpenseCategories as $cat)
+          <div class="expense-cat-row">
+            <span>{{ $cat->category ?: 'Uncategorised' }}</span>
+            <b>TSh {{ number_format($cat->total) }}</b>
+          </div>
+        @empty
+          <div class="expense-empty">No expenses recorded this month.</div>
+        @endforelse
+      </div>
     </section>
   </div>
 
@@ -212,14 +215,13 @@
   </div>
 
   <script>
-    // Live clock in the head
-    (function(){
-      function tick(){
+    (function () {
+      function tick() {
         var now = new Date();
         var dateEl = document.getElementById('dashboardClock');
         var timeEl = document.getElementById('dashboardTime');
-        if(dateEl) dateEl.textContent = new Intl.DateTimeFormat('en-TZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now).toUpperCase();
-        if(timeEl) timeEl.textContent = new Intl.DateTimeFormat('en-TZ',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}).format(now);
+        if (dateEl) dateEl.textContent = new Intl.DateTimeFormat('en-TZ', {weekday:'long', day:'numeric', month:'long', year:'numeric'}).format(now).toUpperCase();
+        if (timeEl) timeEl.textContent = new Intl.DateTimeFormat('en-TZ', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true}).format(now);
       }
       tick();
       setInterval(tick, 1000);
