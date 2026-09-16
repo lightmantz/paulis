@@ -29,6 +29,22 @@
 .row-action-icon.edit{border-color:#c8e4ff;background:#eff7ff;color:#2458a3}
 .row-action-icon.del{border-color:#f5c9c5;background:#feecec;color:#b13d3d}
 .actions-cell{white-space:nowrap}
+
+/* Product photo */
+.product-thumb{width:44px;height:44px;border-radius:8px;background:#f2f4f8 center/cover no-repeat;border:1px solid #e7eaf0;display:inline-block;vertical-align:middle}
+.product-thumb.empty{display:grid;place-items:center;color:#98a0ad;font-size:14px}
+.product-cell{display:flex;align-items:center;gap:10px}
+.product-cell small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+
+/* File upload */
+.photo-field{grid-column:1/-1;border:1px solid #dcd7ff;background:#faf9ff;border-radius:10px;padding:12px}
+.photo-field > label{display:block;font-size:10px;font-weight:800;margin-bottom:8px}
+.photo-editor{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center}
+.photo-preview{width:110px;height:100px;border-radius:9px;background:#edf0f5 center/cover no-repeat;border:1px solid #dfe3ea;display:grid;place-items:center;color:#98a0ad;font-size:10px;font-weight:700;text-align:center;overflow:hidden}
+.photo-preview.has-photo span{display:none}
+.photo-help{display:block;color:var(--muted);font-size:9px;line-height:1.5;margin-bottom:6px}
+input[type="file"]{font-size:11px;padding:8px 10px;border:1px solid #dfe3ea;border-radius:8px;background:#fff;width:100%;cursor:pointer}
+input[type="file"]::file-selector-button{font:inherit;font-size:11px;font-weight:700;color:#5a4ac2;background:#f5f2ff;border:1px solid #dcd7ff;border-radius:6px;padding:6px 10px;margin-right:10px;cursor:pointer}
 </style>
 @endpush
 
@@ -54,6 +70,7 @@
       <table class="data">
         <thead>
           <tr>
+            <th>Photo</th>
             <th>Product</th><th>SKU / barcode</th><th>Condition</th>
             <th>Stock</th><th>Cost</th><th>Price</th><th>Status</th><th>Actions</th>
           </tr>
@@ -61,7 +78,21 @@
         <tbody>
           @forelse ($products as $p)
             <tr>
-              <td><b>{{ $p->name }}</b><small>{{ $p->specs }}</small></td>
+              <td>
+                @if ($p->photo_url)
+                  <span class="product-thumb" style="background-image:url('{{ $p->photo_url }}')"></span>
+                @else
+                  <span class="product-thumb empty">▱</span>
+                @endif
+              </td>
+              <td>
+                <div class="product-cell">
+                  <div>
+                    <b>{{ $p->name }}</b>
+                    <small>{{ \Illuminate\Support\Str::limit($p->specs, 60) }}</small>
+                  </div>
+                </div>
+              </td>
               <td><code>{{ $p->sku }}</code><small>{{ $p->barcode }}</small></td>
               <td>{{ $p->condition }}</td>
               <td>{{ $p->stock }}</td>
@@ -74,7 +105,7 @@
               </td>
               <td class="actions-cell">
                 <button class="row-action-icon view" onclick="viewProduct({{ $p->id }})">View</button>
-                <button class="row-action-icon edit" onclick='editProduct(@json($p))'>Edit</button>
+                <button class="row-action-icon edit" onclick='editProduct(@json($p->toArray() + ["photo_url" => $p->photo_url]))'>Edit</button>
                 <form method="POST" action="{{ route('business.inventory.destroy', $p) }}" style="display:inline"
                       onsubmit="return confirm('Delete {{ addslashes($p->name) }}? This cannot be undone.')">
                   @csrf
@@ -84,7 +115,7 @@
               </td>
             </tr>
           @empty
-            <tr><td colspan="8" class="empty">No products yet. Click “Add product” to create the first one.</td></tr>
+            <tr><td colspan="9" class="empty">No products yet. Click “Add product” to create the first one.</td></tr>
           @endforelse
         </tbody>
       </table>
@@ -93,10 +124,10 @@
     <div class="pager">{{ $products->links() }}</div>
   </section>
 
-  {{-- Add modal --}}
+  {{-- ═══ ADD modal ═══ --}}
   <div class="modal-backdrop" id="addModal">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <form method="POST" action="{{ route('business.inventory.store') }}">
+      <form method="POST" action="{{ route('business.inventory.store') }}" enctype="multipart/form-data">
         @csrf
         <header class="modal-head">
           <div><h2>Add product</h2><p>Create a new inventory item.</p></div>
@@ -119,6 +150,19 @@
             <div class="field"><label>Reorder level *</label><input name="reorder_level" type="number" value="5" min="0" required></div>
             <div class="field"><label>Unit cost (TSh) *</label><input name="unit_cost" type="number" value="0" min="0" required></div>
             <div class="field"><label>Selling price (TSh) *</label><input name="selling_price" type="number" value="0" min="0" required></div>
+
+            <div class="photo-field">
+              <label>Product photo</label>
+              <div class="photo-editor">
+                <div class="photo-preview" id="addPhotoPreview"><span>No photo</span></div>
+                <div>
+                  <small class="photo-help">JPG, PNG or WebP · max 4 MB · one photo per product model. Shown on POS and inventory.</small>
+                  <input type="file" name="photo" accept="image/*"
+                         onchange="previewPhoto(this, 'addPhotoPreview')">
+                </div>
+              </div>
+            </div>
+
             <div class="field full"><label>Specifications</label><textarea name="specs" rows="3"></textarea></div>
           </div>
         </div>
@@ -130,7 +174,7 @@
     </div>
   </div>
 
-  {{-- View modal --}}
+  {{-- ═══ VIEW modal ═══ --}}
   <div class="modal-backdrop" id="viewModal">
     <div class="modal-card" onclick="event.stopPropagation()">
       <header class="modal-head">
@@ -138,6 +182,10 @@
         <button type="button" onclick="closeModal('viewModal')">×</button>
       </header>
       <div class="modal-body">
+        <div id="viewPhotoWrap" style="margin-bottom:14px;display:none">
+          <img id="viewPhoto" src="" alt="Product photo"
+               style="max-width:100%;max-height:260px;border-radius:10px;border:1px solid var(--line)">
+        </div>
         <div class="view-list" id="viewBody"></div>
       </div>
       <footer class="modal-actions">
@@ -146,10 +194,10 @@
     </div>
   </div>
 
-  {{-- Edit modal --}}
+  {{-- ═══ EDIT modal ═══ --}}
   <div class="modal-backdrop" id="editModal">
     <div class="modal-card" onclick="event.stopPropagation()">
-      <form method="POST" id="editForm">
+      <form method="POST" id="editForm" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         <header class="modal-head">
@@ -175,6 +223,19 @@
             <div class="field"><label>Reorder level *</label><input name="reorder_level" id="e_reorder" type="number" min="0" required></div>
             <div class="field"><label>Unit cost (TSh) *</label><input name="unit_cost" id="e_cost" type="number" min="0" required></div>
             <div class="field"><label>Selling price (TSh) *</label><input name="selling_price" id="e_price" type="number" min="0" required></div>
+
+            <div class="photo-field">
+              <label>Product photo</label>
+              <div class="photo-editor">
+                <div class="photo-preview" id="editPhotoPreview"><span>No photo</span></div>
+                <div>
+                  <small class="photo-help">Upload a new image to replace the existing one. Leave empty to keep the current photo.</small>
+                  <input type="file" name="photo" accept="image/*"
+                         onchange="previewPhoto(this, 'editPhotoPreview')">
+                </div>
+              </div>
+            </div>
+
             <div class="field full"><label>Specifications</label><textarea name="specs" id="e_specs" rows="3"></textarea></div>
           </div>
         </div>
@@ -191,13 +252,43 @@
   function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
   function openAdd() { openModal('addModal'); }
 
+  function previewPhoto(input, previewId) {
+    var preview = document.getElementById(previewId);
+    if (!preview) return;
+    var file = input.files && input.files[0];
+    if (!file) { return; }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      preview.style.backgroundImage = 'url(' + JSON.stringify(e.target.result) + ')';
+      preview.classList.add('has-photo');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function setPreviewUrl(previewId, url) {
+    var preview = document.getElementById(previewId);
+    if (!preview) return;
+    if (url) {
+      preview.style.backgroundImage = 'url(' + JSON.stringify(url) + ')';
+      preview.classList.add('has-photo');
+    } else {
+      preview.style.backgroundImage = '';
+      preview.classList.remove('has-photo');
+    }
+  }
+
   async function viewProduct(id) {
-    const res = await fetch(`/app/inventory/${id}`, { headers: { 'Accept': 'application/json' } });
+    const res = await fetch('/app/inventory/' + id, { headers: { 'Accept': 'application/json' } });
     if (!res.ok) return alert('Could not load product');
     const p = await res.json();
 
     document.getElementById('viewName').textContent = p.name;
-    document.getElementById('viewSku').textContent = p.sku + (p.barcode ? ' · ' + p.barcode : '');
+    document.getElementById('viewSku').textContent  = p.sku + (p.barcode ? ' · ' + p.barcode : '');
+
+    var wrap = document.getElementById('viewPhotoWrap');
+    var img  = document.getElementById('viewPhoto');
+    if (p.photo_url) { img.src = p.photo_url; wrap.style.display = 'block'; }
+    else             { img.src = '';          wrap.style.display = 'none'; }
 
     document.getElementById('viewBody').innerHTML = `
       <div><span>Condition</span><b>${esc(p.condition)}</b></div>
@@ -215,16 +306,19 @@
     document.getElementById('editSubtitle').textContent = p.name + ' · ' + p.sku;
     document.getElementById('editForm').action = '/app/inventory/' + p.id;
 
-    document.getElementById('e_name').value    = p.name;
-    document.getElementById('e_sku').value     = p.sku;
-    document.getElementById('e_barcode').value = p.barcode || '';
+    document.getElementById('e_name').value     = p.name;
+    document.getElementById('e_sku').value      = p.sku;
+    document.getElementById('e_barcode').value  = p.barcode || '';
     document.getElementById('e_condition').value = p.condition;
     document.getElementById('e_tracking').value  = p.tracking;
-    document.getElementById('e_stock').value   = p.stock;
-    document.getElementById('e_reorder').value = p.reorder_level;
-    document.getElementById('e_cost').value    = Math.round(p.unit_cost);
-    document.getElementById('e_price').value   = Math.round(p.selling_price);
-    document.getElementById('e_specs').value   = p.specs || '';
+    document.getElementById('e_stock').value    = p.stock;
+    document.getElementById('e_reorder').value  = p.reorder_level;
+    document.getElementById('e_cost').value     = Math.round(p.unit_cost);
+    document.getElementById('e_price').value    = Math.round(p.selling_price);
+    document.getElementById('e_specs').value    = p.specs || '';
+
+    setPreviewUrl('editPhotoPreview', p.photo_url || null);
+
     openModal('editModal');
   }
 

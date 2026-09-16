@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Services\SaleService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PosController extends Controller
 {
@@ -14,7 +15,21 @@ class PosController extends Controller
     {
         $products = Product::where('stock', '>', 0)
             ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'barcode', 'selling_price', 'stock', 'condition', 'specs']);
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id'            => $p->id,
+                    'name'          => $p->name,
+                    'sku'           => $p->sku,
+                    'barcode'       => $p->barcode,
+                    'condition'     => $p->condition,
+                    'stock'         => (int) $p->stock,
+                    'selling_price' => (float) $p->selling_price,
+                    'specs'         => $p->specs,
+                    'photo_url'     => $p->photo_url,
+                    'tracking'      => $p->tracking,
+                ];
+            });
 
         $customers = Customer::orderBy('name')->get(['id', 'name', 'phone']);
 
@@ -30,15 +45,15 @@ class PosController extends Controller
             'paid'           => ['nullable', 'numeric', 'min:0'],
             'document_type'  => ['required', 'in:Receipt,Invoice,Quotation'],
             'notes'          => ['nullable', 'string'],
-            'items'          => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
-            'items.*.qty'        => ['required', 'integer', 'min:1'],
+            'items'                  => ['required', 'array', 'min:1'],
+            'items.*.product_id'     => ['required', 'integer', 'exists:products,id'],
+            'items.*.qty'            => ['required', 'integer', 'min:1'],
         ]);
 
         try {
             $sale = $service->complete($data);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withErrors($e->errors());
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
         }
 
         return redirect()
