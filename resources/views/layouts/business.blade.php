@@ -22,6 +22,9 @@
     <a class="nav-btn @if(request()->routeIs('business.pos')) active @endif"
        href="{{ route('business.pos') }}"><span>▣</span>Point of Sale</a>
 
+       <a class="nav-btn @if(request()->routeIs('business.sales')) active @endif"
+         href="{{ route('business.sales') }}"><span>▥</span>Sales</a>
+
     <a class="nav-btn @if(request()->routeIs('business.inventory')) active @endif"
        href="{{ route('business.inventory') }}"><span>▦</span>Inventory</a>
 

@@ -12,6 +12,7 @@ use App\Http\Controllers\Business\PurchaseController;
 use App\Http\Controllers\Business\RepairController;
 use App\Http\Controllers\Business\ReportController;
 use App\Http\Controllers\Business\ReturnController;
+use App\Http\Controllers\Business\SaleController;
 use App\Http\Controllers\Business\SettingController;
 use App\Http\Controllers\Business\StockTakeController;
 use App\Http\Controllers\Business\SupplierController;
@@ -36,12 +37,17 @@ Route::post('/logout', [BusinessLoginController::class, 'logout'])->name('busine
 // ── Business app ────────────────────────────────────────────────
 Route::middleware(['business'])->prefix('app')->name('business.')->group(function () {
 
-    // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // POS
     Route::get('/pos',  [PosController::class, 'index'])->name('pos');
     Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
+
+    // Sales list + exports
+    Route::get('/sales',              [SaleController::class, 'index'])->name('sales');
+    Route::get('/sales/export/csv',   [SaleController::class, 'exportCsv'])->name('sales.export.csv');
+    Route::get('/sales/export/excel', [SaleController::class, 'exportExcel'])->name('sales.export.excel');
+    Route::get('/sales/export/pdf',   [SaleController::class, 'exportPdf'])->name('sales.export.pdf');
 
     // Inventory
     Route::get('/inventory',              [InventoryController::class, 'index'])->name('inventory');
@@ -75,7 +81,7 @@ Route::middleware(['business'])->prefix('app')->name('business.')->group(functio
     Route::get('/users',  [UserAccessController::class, 'index'])->name('users');
     Route::post('/users', [UserAccessController::class, 'store'])->name('users.store');
 
-    // Activity History
+    // Activity
     Route::get('/activity', [ActivityController::class, 'index'])->name('activity');
 
     // Settings
